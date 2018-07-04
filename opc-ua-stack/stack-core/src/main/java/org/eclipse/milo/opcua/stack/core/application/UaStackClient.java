@@ -29,11 +29,23 @@ import org.eclipse.milo.opcua.stack.core.types.structured.EndpointDescription;
 
 public interface UaStackClient {
 
+    /**
+     * Connect to the server without retrying on failure.
+     *
+     * @return a {@link CompletableFuture} holding the result of the immediate connect attempt.
+     */
     default CompletableFuture<UaStackClient> connect() {
         return connect(false);
     }
 
-    CompletableFuture<UaStackClient> connect(boolean keepTrying);
+    /**
+     * Connect to the server, optionally retrying on failure.
+     *
+     * @param persistent if {@code true}, the client will keep trying to connect after a failed attempt, until either
+     *                   a connection is made or {@link #disconnect()} is called.
+     * @return a {@link CompletableFuture} holding the result of the immediate connect attempt.
+     */
+    CompletableFuture<UaStackClient> connect(boolean persistent);
 
     CompletableFuture<UaStackClient> disconnect();
 

@@ -58,7 +58,7 @@ class ClientChannelManager {
         return connect(false);
     }
 
-    public CompletableFuture<ClientSecureChannel> connect(boolean keepTrying) {
+    public CompletableFuture<ClientSecureChannel> connect(boolean persistent) {
         State currentState = state.get();
 
         logger.debug("connect(), currentState={}",
@@ -81,7 +81,7 @@ class ClientChannelManager {
                                 chan.getChannel().pipeline().addLast(new InactivityHandler());
                             }
                         } else {
-                            if (keepTrying) {
+                            if (persistent) {
                                 Reconnecting reconnecting = new Reconnecting();
 
                                 if (state.compareAndSet(connectingState, reconnecting)) {
@@ -95,7 +95,7 @@ class ClientChannelManager {
                     client.getExecutorService()
                 );
             } else {
-                return connect(keepTrying);
+                return connect(persistent);
             }
         } else if (currentState instanceof Connecting) {
             return ((Connecting) currentState).connected;
@@ -109,7 +109,7 @@ class ClientChannelManager {
             CompletableFuture<Unit> disconnectFuture = ((Disconnecting) currentState).disconnectFuture;
 
             disconnectFuture.whenCompleteAsync(
-                (unit, ex) -> connect(keepTrying).whenCompleteAsync(
+                (unit, ex) -> connect(persistent).whenCompleteAsync(
                     (chan, ex2) -> {
                         if (chan != null) future.complete(chan);
                         else future.completeExceptionally(ex2);
