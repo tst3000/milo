@@ -21,6 +21,7 @@ import javax.annotation.Nullable;
 
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.util.HashedWheelTimer;
+import org.eclipse.milo.opcua.stack.client.config.proxy.UaTcpStackClientProxyConfig;
 import org.eclipse.milo.opcua.stack.core.Stack;
 import org.eclipse.milo.opcua.stack.core.application.CertificateValidator;
 import org.eclipse.milo.opcua.stack.core.application.InsecureCertificateValidator;
@@ -52,6 +53,8 @@ public class UaTcpStackClientConfigBuilder {
     private NioEventLoopGroup eventLoop;
     private HashedWheelTimer wheelTimer;
     private UInteger acknowledgeTimeout = uint(5 * 1000);
+
+    private UaTcpStackClientProxyConfig proxyConfig;
 
     public UaTcpStackClientConfigBuilder setEndpointUrl(String endpointUrl) {
         this.endpointUrl = endpointUrl;
@@ -133,6 +136,11 @@ public class UaTcpStackClientConfigBuilder {
         return this;
     }
 
+    public UaTcpStackClientConfigBuilder setProxyConfig(UaTcpStackClientProxyConfig proxyConfig) {
+        this.proxyConfig = proxyConfig;
+        return this;
+    }
+
     public UaTcpStackClientConfig build() {
         if (executor == null) {
             executor = Stack.sharedExecutor();
@@ -160,7 +168,8 @@ public class UaTcpStackClientConfigBuilder {
             executor,
             eventLoop,
             wheelTimer,
-            acknowledgeTimeout
+            acknowledgeTimeout,
+            proxyConfig
         );
     }
 
@@ -185,6 +194,8 @@ public class UaTcpStackClientConfigBuilder {
         private final HashedWheelTimer wheelTimer;
         private final UInteger acknowledgeTimeout;
 
+        private final UaTcpStackClientProxyConfig proxyConfig;
+
         public UaTcpStackClientConfigImpl(
             @Nullable String endpointUrl,
             @Nullable EndpointDescription endpoint,
@@ -201,7 +212,8 @@ public class UaTcpStackClientConfigBuilder {
             ExecutorService executor,
             NioEventLoopGroup eventLoop,
             HashedWheelTimer wheelTimer,
-            UInteger acknowledgeTimeout) {
+            UInteger acknowledgeTimeout,
+            UaTcpStackClientProxyConfig proxyConfig) {
 
             this.endpointUrl = endpointUrl;
             this.endpoint = endpoint;
@@ -219,6 +231,7 @@ public class UaTcpStackClientConfigBuilder {
             this.eventLoop = eventLoop;
             this.wheelTimer = wheelTimer;
             this.acknowledgeTimeout = acknowledgeTimeout;
+            this.proxyConfig = proxyConfig;
         }
 
         @Override
@@ -309,6 +322,10 @@ public class UaTcpStackClientConfigBuilder {
             return acknowledgeTimeout;
         }
 
+        @Override
+        public UaTcpStackClientProxyConfig getProxyConfig() {
+            return proxyConfig;
+        }
     }
 
 }

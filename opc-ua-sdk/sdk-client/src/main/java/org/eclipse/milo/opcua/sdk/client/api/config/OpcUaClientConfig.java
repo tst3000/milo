@@ -92,6 +92,7 @@ public interface OpcUaClientConfig extends UaTcpStackClientConfig {
         builder.setExecutor(config.getExecutor());
         builder.setEventLoop(config.getEventLoop());
         builder.setWheelTimer(config.getWheelTimer());
+        builder.setProxyConfig(config.getProxyConfig());
 
         // OpcUaClientConfig values
         builder.setSessionName(config.getSessionName());

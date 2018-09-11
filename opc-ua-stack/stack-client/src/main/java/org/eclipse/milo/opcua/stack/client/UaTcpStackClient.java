@@ -14,6 +14,7 @@
 package org.eclipse.milo.opcua.stack.client;
 
 import java.net.ConnectException;
+import java.net.SocketAddress;
 import java.net.URI;
 import java.nio.channels.ClosedChannelException;
 import java.security.KeyPair;
@@ -29,8 +30,10 @@ import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
+import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
+import com.google.common.reflect.Reflection;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.channel.Channel;
@@ -40,11 +43,16 @@ import io.netty.channel.ChannelOption;
 import io.netty.channel.ConnectTimeoutException;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
+import io.netty.handler.proxy.Socks5ProxyHandler;
+import io.netty.resolver.AddressResolver;
+import io.netty.resolver.AddressResolverGroup;
 import io.netty.util.HashedWheelTimer;
 import io.netty.util.Timeout;
+import io.netty.util.concurrent.EventExecutor;
 import org.eclipse.milo.opcua.stack.client.config.UaTcpStackClientConfig;
 import org.eclipse.milo.opcua.stack.client.handlers.UaRequestFuture;
 import org.eclipse.milo.opcua.stack.client.handlers.UaTcpClientAcknowledgeHandler;
+import org.eclipse.milo.opcua.stack.client.util.ProxyAddressResolver;
 import org.eclipse.milo.opcua.stack.core.Stack;
 import org.eclipse.milo.opcua.stack.core.StatusCodes;
 import org.eclipse.milo.opcua.stack.core.UaException;
@@ -82,7 +90,7 @@ public class UaTcpStackClient implements UaStackClient {
 
     private static final long DEFAULT_TIMEOUT_MS = 60000;
 
-    private final Logger logger = LoggerFactory.getLogger(getClass());
+    private static final Logger logger = LoggerFactory.getLogger(UaTcpStackClient.class);
 
     private final LongSequence requestHandles = new LongSequence(0, UInteger.MAX_VALUE);
 
@@ -482,6 +490,12 @@ public class UaTcpStackClient implements UaStackClient {
                 UaTcpClientAcknowledgeHandler acknowledgeHandler =
                     new UaTcpClientAcknowledgeHandler(client, secureChannel, handshake);
 
+                if (client.getConfig().getProxyConfig() != null &&
+                        client.getConfig().getProxyConfig().getProxyAddress() != null) {
+                    channel.pipeline().addFirst(
+                            new Socks5ProxyHandler(client.getConfig().getProxyConfig().getProxyAddress()));
+                    }
+
                 channel.pipeline().addLast(acknowledgeHandler);
             }
         };
@@ -492,8 +506,24 @@ public class UaTcpStackClient implements UaStackClient {
             .channel(NioSocketChannel.class)
             .option(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT)
             .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 5000)
-            .option(ChannelOption.TCP_NODELAY, true)
-            .handler(initializer);
+            .option(ChannelOption.TCP_NODELAY, true);
+
+        logger.info("ProxyConfig: {}", client.getConfig().getProxyConfig());
+
+        if (client.getConfig().getProxyConfig() != null &&
+                client.getConfig().getProxyConfig().getProxyAddress() != null &&
+                client.getConfig().getProxyConfig().isResolveOnProxy()) {
+
+
+            bootstrap.resolver(new AddressResolverGroup<SocketAddress>() {
+                @Override
+                protected AddressResolver<SocketAddress> newResolver(EventExecutor eventExecutor) {
+                    return new ProxyAddressResolver();
+                }
+            });
+        }
+
+        bootstrap.handler(initializer);
 
         try {
             URI uri = new URI(client.getEndpointUrl()).parseServerAuthority();

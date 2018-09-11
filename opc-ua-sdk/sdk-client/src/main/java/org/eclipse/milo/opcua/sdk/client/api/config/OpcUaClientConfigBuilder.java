@@ -27,6 +27,7 @@ import org.eclipse.milo.opcua.sdk.client.api.identity.AnonymousProvider;
 import org.eclipse.milo.opcua.sdk.client.api.identity.IdentityProvider;
 import org.eclipse.milo.opcua.stack.client.config.UaTcpStackClientConfig;
 import org.eclipse.milo.opcua.stack.client.config.UaTcpStackClientConfigBuilder;
+import org.eclipse.milo.opcua.stack.client.config.proxy.UaTcpStackClientProxyConfig;
 import org.eclipse.milo.opcua.stack.core.application.CertificateValidator;
 import org.eclipse.milo.opcua.stack.core.channel.ChannelConfig;
 import org.eclipse.milo.opcua.stack.core.serialization.EncodingLimits;
@@ -175,6 +176,12 @@ public class OpcUaClientConfigBuilder extends UaTcpStackClientConfigBuilder {
     @Override
     public OpcUaClientConfigBuilder setAcknowledgeTimeout(UInteger acknowledgeTimeout) {
         super.setAcknowledgeTimeout(acknowledgeTimeout);
+        return this;
+    }
+
+    @Override
+    public OpcUaClientConfigBuilder setProxyConfig(UaTcpStackClientProxyConfig proxyConfig) {
+        super.setProxyConfig(proxyConfig);
         return this;
     }
 
@@ -342,6 +349,11 @@ public class OpcUaClientConfigBuilder extends UaTcpStackClientConfigBuilder {
         @Override
         public UInteger getAcknowledgeTimeout() {
             return stackClientConfig.getAcknowledgeTimeout();
+        }
+
+        @Override
+        public UaTcpStackClientProxyConfig getProxyConfig() {
+            return stackClientConfig.getProxyConfig();
         }
 
     }

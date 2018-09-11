@@ -22,6 +22,7 @@ import java.util.function.Consumer;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.util.HashedWheelTimer;
 import org.eclipse.milo.opcua.stack.client.UaTcpStackClient;
+import org.eclipse.milo.opcua.stack.client.config.proxy.UaTcpStackClientProxyConfig;
 import org.eclipse.milo.opcua.stack.core.application.CertificateValidator;
 import org.eclipse.milo.opcua.stack.core.channel.ChannelConfig;
 import org.eclipse.milo.opcua.stack.core.serialization.EncodingLimits;
@@ -131,6 +132,10 @@ public interface UaTcpStackClientConfig {
      */
     UInteger getAcknowledgeTimeout();
 
+
+    UaTcpStackClientProxyConfig getProxyConfig();
+
+
     /**
      * @return a new {@link UaTcpStackClientConfigBuilder}.
      */
@@ -164,9 +169,11 @@ public interface UaTcpStackClientConfig {
         builder.setEventLoop(config.getEventLoop());
         builder.setWheelTimer(config.getWheelTimer());
         builder.setAcknowledgeTimeout(config.getAcknowledgeTimeout());
+        builder.setProxyConfig(config.getProxyConfig());
 
         return builder;
     }
+
 
     /**
      * Copy the values from an existing {@link UaTcpStackClientConfig} into a new {@link UaTcpStackClientConfigBuilder}
